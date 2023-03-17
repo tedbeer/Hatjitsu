@@ -176,10 +176,15 @@ function RoomCtrl($scope, $routeParams, $timeout, socket) {
   };
 
   var haveIVoted = function () {
-    if ($scope.myVote === 'undefined' || $scope.myVote === null) {
-      return false;
+    if ($scope.notAccepted) return -1;
+
+    if ($scope.myVote === undefined || $scope.myVote === null) {
+      return 0;
     }
-    return true;
+    if ($scope.cards?.includes($scope.myVote)) {
+        return 1;
+    }
+    return -1;
   };
 
   var votingFinished = function () {
@@ -294,6 +299,7 @@ function RoomCtrl($scope, $routeParams, $timeout, socket) {
       });
     });
     socket.on('card pack set', function () {
+      $scope.notAccepted = false;
       $scope.$emit('show message', 'Card pack changed...');
       // console.log("on card pack set");
       // console.log("emit room info", { roomUrl: $scope.roomId });
@@ -323,6 +329,7 @@ function RoomCtrl($scope, $routeParams, $timeout, socket) {
       });
     });
     socket.on('vote reset', function () {
+      $scope.notAccepted = false;
       // console.log("on vote reset");
       // console.log("emit room info", { roomUrl: $scope.roomId });
       this.emit('room info', { roomUrl: $scope.roomId }, function (response) {
@@ -331,7 +338,7 @@ function RoomCtrl($scope, $routeParams, $timeout, socket) {
     });
 
     socket.on('reveal', function () {
-      // console.log("reveal event received");
+      console.log("reveal event received");
       // setLocalVote(null);
       this.emit('room info', { roomUrl: $scope.roomId }, function (response) {
         processMessage(response, refreshRoomInfo);
@@ -373,11 +380,13 @@ function RoomCtrl($scope, $routeParams, $timeout, socket) {
   $scope.vote = function (vote) {
     if ($scope.myVote !== vote) {
       if (!votingFinished() && $scope.voter) {
-      	if (!$scope.cards.includes(vote)) vote = "💩";
-
+        $scope.notAccepted = !$scope.cards.includes(vote);
+        if ($scope.notAccepted) {
+            if ($scope.myVote) $scope.unvote($scope.sessionId);
+            $scope.$emit('show message', 'Your vote is not accepted 💩');
+            return;
+        }
         setLocalVote(vote);
-
-        // console.log("emit vote", { roomUrl: $scope.roomId, vote: vote, sessionId: $scope.sessionId });
         socket.emit('vote', { roomUrl: $scope.roomId, vote: vote, sessionId: $scope.sessionId }, function (response) {
           processMessage(response);
         });

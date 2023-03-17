@@ -55,8 +55,9 @@
 
       <div ng-switch-when="true">
         <div ng-switch on="voted">
-          <p ng-switch-when="false">You haven't estimated yet</p>
-          <p ng-switch-when="true">Your current estimate: <b>{{myVote}}</b></p>
+          <p ng-switch-when="0">You haven't estimated yet</p>
+          <p ng-switch-when="1">Your current estimate: <b>{{myVote}}</b></p>
+          <p ng-switch-when="-1">Your vote is not accepted: <b>💩</b></p>
         </div>
       </div>
 
